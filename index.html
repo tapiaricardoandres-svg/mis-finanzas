@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Finanzas · Detector v4</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,sans-serif;background:#f5f5f5;color:#1a1a1a;padding:1rem}
+.app{max-width:480px;margin:0 auto}
+.section-label{font-size:11px;color:#888;text-transform:uppercase;letter-spacing:.06em;font-weight:500;margin-bottom:8px}
+.examples{display:flex;flex-direction:column;gap:6px;margin-bottom:1rem}
+.ex-pill{background:#fff;border:1px solid #e0e0e0;border-radius:10px;padding:8px 12px;cursor:pointer;font-size:12px;color:#666;line-height:1.5}
+.ex-pill:hover{border-color:#aaa;color:#333}
+.ex-pill.active{border-color:#185FA5;background:#E6F1FB;color:#0C447C}
+.ex-bank{font-size:10px;font-weight:600;margin-bottom:2px;opacity:.7}
+textarea{width:100%;min-height:72px;font-size:13px;font-family:inherit;padding:9px 11px;border:1px solid #e0e0e0;border-radius:8px;background:#fff;color:#1a1a1a;resize:none}
+textarea:focus{outline:none;border-color:#185FA5}
+.parse-btn{width:100%;padding:10px;font-size:13px;font-weight:500;border-radius:8px;border:1px solid #ccc;background:#fff;color:#1a1a1a;cursor:pointer;margin-top:6px}
+.parse-btn:hover{background:#f0f0f0}
+.card{background:#fff;border:1px solid #e0e0e0;border-radius:12px;padding:14px 16px;margin:1rem 0;display:none}
+.card.visible{display:block}
+.rrow{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid #f0f0f0}
+.rrow:last-of-type{border-bottom:none}
+.rlabel{font-size:12px;color:#888}
+.rval{font-size:13px;font-weight:500}
+.badge{font-size:11px;padding:3px 10px;border-radius:99px;font-weight:500}
+.be{background:#FCEBEB;color:#A32D2D}.bi{background:#EAF3DE;color:#3B6D11}
+.bf{background:#E6F1FB;color:#185FA5}.bs{background:#FAEEDA;color:#854F0B}
+select.cat-sel{font-size:12px;font-family:inherit;padding:4px 8px;border-radius:8px;border:1px solid #e0e0e0;background:#fff}
+.conf-wrap{display:flex;align-items:center;gap:8px}
+.conf-track{width:60px;background:#f0f0f0;border-radius:99px;height:4px;overflow:hidden}
+.conf-fill{height:4px;border-radius:99px}
+.ask-box{background:#fafafa;border:1px solid #e0e0e0;border-radius:8px;padding:10px 12px;margin:10px 0;display:none}
+.ask-label{font-size:12px;color:#888;margin-bottom:6px}
+.ask-input{width:100%;font-size:13px;font-family:inherit;padding:7px 10px;border:1px solid #e0e0e0;border-radius:8px;background:#fff}
+.ask-input:focus{outline:none;border-color:#185FA5}
+.ask-hints{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
+.hint-pill{font-size:11px;padding:3px 10px;border-radius:99px;border:1px solid #e0e0e0;background:#fff;color:#666;cursor:pointer}
+.hint-pill:hover{border-color:#185FA5;color:#185FA5}
+.crow{display:flex;gap:8px;margin-top:12px}
+.btn{flex:1;padding:9px;font-size:13px;font-weight:500;border-radius:8px;border:1px solid #ccc;cursor:pointer;background:#fff}
+.btn.primary{background:#185FA5;color:#fff;border-color:#185FA5}
+.btn.primary:hover{background:#0C447C}
+.ok-msg{font-size:12px;color:#3B6D11;background:#EAF3DE;border-radius:8px;padding:7px 12px;margin-top:8px;display:none}
+.divider{height:1px;background:#f0f0f0;margin:1rem 0}
+.log-item{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid #f5f5f5}
+.log-item:last-child{border-bottom:none}
+.log-desc{font-size:13px}
+.log-meta{font-size:11px;color:#888;margin-top:1px}
+.log-amt{font-size:14px;font-weight:500}
+.amt-e{color:#A32D2D}.amt-i{color:#3B6D11}
+.empty{font-size:13px;color:#aaa;text-align:center;padding:1.5rem 0}
+.bal-row{display:flex;justify-content:space-between;padding-top:10px;margin-top:4px;border-top:1px solid #e0e0e0}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="section-label">Notificaciones reales de tus bancos</div>
+  <div class="examples">
+    <div class="ex-pill" onclick="sel(this,'Te informamos que se ha realizado una compra por $3.990 con Tarjeta de Crédito ****1578 en UBER LAS CONDES CL el 02/04/2026 13:39.')">
+      <div class="ex-bank">Banco de Chile · Email</div>Compra $3.990 en UBER LAS CONDES CL
+    </div>
+    <div class="ex-pill" onclick="sel(this,'Te informamos que se ha realizado una compra por $22.490 en LIDER EXPRESS LAS CONDES CL el 02/04/2026 09:15.')">
+      <div class="ex-bank">Banco de Chile · Email</div>Compra $22.490 en LIDER EXPRESS
+    </div>
+    <div class="ex-pill" onclick="sel(this,'Hiciste un giro o compra por $36.000 con tu tarjeta de débito terminada en 9237, el día 01-04-2026 a las 21:52.')">
+      <div class="ex-bank">Itaú · Notificación push</div>Giro o compra $36.000 (sin comercio)
+    </div>
+    <div class="ex-pill" onclick="sel(this,'Transferiste $2.000 desde tu cuenta terminada en 4371, el día 01-04-2026 a las 21:04.')">
+      <div class="ex-bank">Itaú · Notificación push</div>Transferencia enviada $2.000
+    </div>
+  </div>
+
+  <div class="section-label">O pegá el texto</div>
+  <textarea id="txt" placeholder="Pegá aquí el texto real de tu notificación..."></textarea>
+  <button class="parse-btn" onclick="parse()">Interpretar ↗</button>
+
+  <div class="card" id="card">
+    <div class="section-label" style="margin-bottom:10px">Detectado</div>
+    <div class="rrow"><span class="rlabel">Banco</span><span class="rval" id="r-banco">—</span></div>
+    <div class="rrow"><span class="rlabel">Monto</span><span class="rval" id="r-monto">—</span></div>
+    <div class="rrow"><span class="rlabel">Tipo</span><span id="r-tipo"></span></div>
+    <div class="rrow"><span class="rlabel">Comercio</span><span class="rval" id="r-comercio">—</span></div>
+    <div class="rrow"><span class="rlabel">Categoría</span>
+      <select class="cat-sel" id="r-cat">
+        <option>Alimentación</option><option>Hogar</option><option>Transporte</option>
+        <option>Deudas</option><option>Entretenimiento</option><option>Salud</option>
+        <option>Cuidado Personal</option><option>Viajes y Vacaciones</option>
+        <option>Educación</option><option>Mascotas</option><option>Donaciones</option>
+        <option>Ahorros e Inversiones</option><option>Misceláneos</option>
+        <option>Ingresos Laborales</option><option>Ingresos Extra</option>
+      </select>
+    </div>
+    <div class="rrow"><span class="rlabel">Periodicidad</span><span id="r-period"></span></div>
+    <div class="rrow" style="border:none;padding-bottom:0"><span class="rlabel">Confianza</span>
+      <div class="conf-wrap"><div class="conf-track"><div class="conf-fill" id="r-cbar"></div></div><span class="rval" id="r-cval">—</span></div>
+    </div>
+    <div class="ask-box" id="ask-box">
+      <div class="ask-label">Itaú no indica el comercio. ¿En qué gastaste este dinero?</div>
+      <input class="ask-input" id="ask-input" type="text" placeholder="Ej: Lider, Shell, farmacia..." oninput="onAsk(this.value)">
+      <div class="ask-hints" id="ask-hints"></div>
+    </div>
+    <div class="crow">
+      <button class="btn" onclick="cancelar()">Cancelar</button>
+      <button class="btn primary" onclick="confirmar()">Confirmar y registrar</button>
+    </div>
+    <div class="ok-msg" id="ok-msg">Registrado correctamente.</div>
+  </div>
+
+  <div class="divider"></div>
+  <div class="section-label">Registros</div>
+  <div id="log"><div class="empty">Aún no hay registros.</div></div>
+  <div id="bal-section" style="display:none">
+    <div class="bal-row">
+      <span style="font-size:12px;color:#888">Balance</span>
+      <span style="font-size:15px;font-weight:500" id="bal-val">$0</span>
+    </div>
+  </div>
+</div>
+<script>
+var records=[];var cur=null;
+var DB=[
+  {kw:['lider','walmart'],cat:'Alimentación',period:'Fijo',label:'Lider'},
+  {kw:['santa isabel'],cat:'Alimentación',period:'Fijo',label:'Santa Isabel'},
+  {kw:['unimarc'],cat:'Alimentación',period:'Fijo',label:'Unimarc'},
+  {kw:['jumbo'],cat:'Alimentación',period:'Fijo',label:'Jumbo'},
+  {kw:['tottus'],cat:'Alimentación',period:'Fijo',label:'Tottus'},
+  {kw:['uber eats','ubereats'],cat:'Alimentación',period:'Esporádico',label:'Uber Eats'},
+  {kw:['uber'],cat:'Transporte',period:'Esporádico',label:'Uber'},
+  {kw:['rappi'],cat:'Alimentación',period:'Esporádico',label:'Rappi'},
+  {kw:['shell'],cat:'Transporte',period:'Esporádico',label:'Shell'},
+  {kw:['copec'],cat:'Transporte',period:'Esporádico',label:'Copec'},
+  {kw:['netflix'],cat:'Entretenimiento',period:'Fijo',label:'Netflix'},
+  {kw:['spotify'],cat:'Entretenimiento',period:'Fijo',label:'Spotify'},
+  {kw:['movistar'],cat:'Hogar',period:'Fijo',label:'Movistar'},
+  {kw:['entel'],cat:'Hogar',period:'Fijo',label:'Entel'},
+  {kw:['claro'],cat:'Hogar',period:'Fijo',label:'Claro'},
+  {kw:['wom'],cat:'Hogar',period:'Fijo',label:'WOM'},
+  {kw:['salcobrand'],cat:'Salud',period:'Esporádico',label:'Salcobrand'},
+  {kw:['cruz verde'],cat:'Salud',period:'Esporádico',label:'Cruz Verde'},
+  {kw:['falabella'],cat:'Cuidado Personal',period:'Esporádico',label:'Falabella'},
+  {kw:['ripley'],cat:'Cuidado Personal',period:'Esporádico',label:'Ripley'},
+];
+var HINTS=['Supermercado','Farmacia','Restaurant','Bencinera','Ropa','Café','Entretenimiento','Salud'];
+function fmt(n){return '$'+Math.round(n).toLocaleString('es-CL');}
+function detectBanco(low){
+  if(low.includes('banco de chile')||low.includes('te informamos'))return'Banco de Chile';
+  if(low.includes('itaú')||low.includes('itau')||low.includes('giro o compra')||low.includes('transferiste'))return'Itaú';
+  return'—';
+}
+function detectComercio(low){
+  for(var i=0;i<DB.length;i++)for(var j=0;j<DB[i].kw.length;j++)if(low.includes(DB[i].kw[j]))return{cat:DB[i].cat,period:DB[i].period,label:DB[i].label,conf:95};
+  var m=low.match(/en ([a-záéíóúñ][a-záéíóúñ\s]+?)(?:\s*cl\b|\s*el\s+\d)/i);
+  if(m){var l=m[1].trim();return{cat:'Misceláneos',period:'Esporádico',label:l.charAt(0).toUpperCase()+l.slice(1),conf:75};}
+  return null;
+}
+function parse(){
+  var text=document.getElementById('txt').value.trim();if(!text)return;
+  var low=text.toLowerCase();
+  var banco=detectBanco(low);
+  var mm=text.match(/\$\s?([\d\.\,]+)/);
+  var monto=mm?parseInt(mm[1].replace(/\./g,'').replace(',','')):0;
+  var esI=/transferencia recibida|abono|depósito/i.test(text);
+  var tipo=esI?'Ingreso':'Egreso';
+  var esItauPush=banco==='Itaú'&&/giro o compra|hiciste/i.test(text);
+  var comercio=detectComercio(low);
+  var needsAsk=esItauPush&&!comercio;
+  cur={banco,monto,tipo,label:comercio?comercio.label:(esI?'Transferencia recibida':needsAsk?'':banco),cat:comercio?comercio.cat:'Misceláneos',period:comercio?comercio.period:'Esporádico',conf:comercio?comercio.conf:(needsAsk?0:65),needsAsk};
+  if(esI){cur.cat='Ingresos Laborales';cur.period='Fijo';cur.label='Transferencia recibida';cur.conf=90;cur.needsAsk=false;}
+  render();
+}
+function render(){
+  var d=cur;
+  document.getElementById('r-banco').textContent=d.banco;
+  document.getElementById('r-monto').textContent=fmt(d.monto);
+  document.getElementById('r-tipo').innerHTML='<span class="badge '+(d.tipo==='Egreso'?'be':'bi')+'">'+d.tipo+'</span>';
+  document.getElementById('r-comercio').textContent=d.label||'Por completar';
+  var s=document.getElementById('r-cat');for(var i=0;i<s.options.length;i++)if(s.options[i].value===d.cat){s.selectedIndex=i;break;}
+  document.getElementById('r-period').innerHTML='<span class="badge '+(d.period==='Fijo'?'bf':'bs')+'">'+d.period+'</span>';
+  var cc=d.conf>=90?'#3B6D11':d.conf>=70?'#BA7517':'#A32D2D';
+  document.getElementById('r-cbar').style.cssText='width:'+Math.max(d.conf,5)+'%;background:'+cc;
+  document.getElementById('r-cval').textContent=d.conf>0?d.conf+'%':'?';
+  document.getElementById('ask-box').style.display=d.needsAsk?'block':'none';
+  document.getElementById('ask-input').value='';
+  document.getElementById('ok-msg').style.display='none';
+  document.getElementById('card').classList.add('visible');
+  if(d.needsAsk)renderHints('');
+}
+function renderHints(v){
+  var h=v.length>0?DB.filter(function(r){return r.label.toLowerCase().includes(v.toLowerCase());}).slice(0,4).map(function(r){return r.label;}):HINTS.slice(0,6);
+  document.getElementById('ask-hints').innerHTML=h.map(function(x){return'<span class="hint-pill" onclick="setHint(\''+x+'\')">'+x+'</span>';}).join('');
+}
+function onAsk(v){
+  renderHints(v);if(!cur)return;
+  var low=v.toLowerCase();var match=null;
+  for(var i=0;i<DB.length;i++)if(DB[i].label.toLowerCase().includes(low)||DB[i].kw.some(function(k){return low.includes(k);})){match=DB[i];break;}
+  cur.label=v;
+  if(match){cur.cat=match.cat;cur.period=match.period;cur.conf=85;}else{cur.conf=50;}
+  document.getElementById('r-comercio').textContent=v||'Por completar';
+  var s=document.getElementById('r-cat');for(var i=0;i<s.options.length;i++)if(s.options[i].value===cur.cat){s.selectedIndex=i;break;}
+  var cc=cur.conf>=90?'#3B6D11':cur.conf>=70?'#BA7517':'#A32D2D';
+  document.getElementById('r-cbar').style.cssText='width:'+cur.conf+'%;background:'+cc;
+  document.getElementById('r-cval').textContent=cur.conf+'%';
+}
+function setHint(h){document.getElementById('ask-input').value=h;onAsk(h);}
+function sel(el,text){
+  document.querySelectorAll('.ex-pill').forEach(function(p){p.classList.remove('active');});
+  el.classList.add('active');document.getElementById('txt').value=text;parse();
+}
+function cancelar(){
+  document.getElementById('card').classList.remove('visible');
+  document.getElementById('txt').value='';
+  document.querySelectorAll('.ex-pill').forEach(function(p){p.classList.remove('active');});cur=null;
+}
+function confirmar(){
+  if(!cur)return;
+  records.unshift({label:cur.label||'Gasto sin nombre',cat:document.getElementById('r-cat').value,banco:cur.banco,period:cur.period,monto:cur.monto,tipo:cur.tipo});
+  renderLog();document.getElementById('ok-msg').style.display='block';setTimeout(cancelar,900);
+}
+function renderLog(){
+  var el=document.getElementById('log');
+  if(!records.length){el.innerHTML='<div class="empty">Aún no hay registros.</div>';document.getElementById('bal-section').style.display='none';return;}
+  document.getElementById('bal-section').style.display='block';
+  var html='';var bal=0;
+  records.forEach(function(r){
+    bal+=r.tipo==='Ingreso'?r.monto:-r.monto;
+    html+='<div class="log-item"><div><div class="log-desc">'+r.label+'</div><div class="log-meta">'+r.cat+' · '+r.banco+'</div></div><div class="log-amt '+(r.tipo==='Egreso'?'amt-e':'amt-i')+'">'+(r.tipo==='Egreso'?'-':'+')+fmt(r.monto)+'</div></div>';
+  });
+  el.innerHTML=html;
+  var b=document.getElementById('bal-val');
+  b.textContent=(bal>=0?'+':'')+fmt(Math.abs(bal));
+  b.style.color=bal>=0?'#3B6D11':'#A32D2D';
+}
+</script>
+</body>
+</html>
