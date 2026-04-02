@@ -367,10 +367,24 @@ function updateHeader(){
 
 function detectBanco(low){
   if(low.includes('banco de chile')||low.includes('te informamos')) return 'Banco de Chile';
-  if(low.includes('itaú')||low.includes('itau')||low.includes('giro o compra')||low.includes('transferiste')) return 'Itaú';
+  if(low.includes('itaú')||low.includes('itau')||low.includes('banco itau')||low.includes('giro o compra')||low.includes('transferiste')) return 'Itaú';
   if(low.includes('estado')) return 'Banco Estado';
   if(low.includes('scotiabank')) return 'Scotiabank';
+  if(low.includes('bci')) return 'BCI';
   return '—';
+}
+
+function detectMonto(text){
+  // 1. Con signo $: $18.000 o $ 18.000
+  var m1 = text.match(/\$\s?([\d\.\,]+)/);
+  if(m1) return parseInt(m1[1].replace(/\./g,'').replace(',',''));
+  // 2. Etiqueta "Monto:" seguida de número: Monto:18.000 o Monto: 200000
+  var m2 = text.match(/monto\s*:\s*([\d\.\,]+)/i);
+  if(m2) return parseInt(m2[1].replace(/\./g,'').replace(',',''));
+  // 3. Texto libre tipo "arriendo 200000" o "gasto 45000"
+  var m3 = text.match(/\b(\d{4,9})\b/);
+  if(m3) return parseInt(m3[1]);
+  return 0;
 }
 
 function detectComercio(low){
@@ -382,20 +396,40 @@ function detectComercio(low){
   return null;
 }
 
+function detectDescripcionLibre(text){
+  // Para textos libres tipo "arriendo 200000" o "taxi 5000"
+  var palabras = ['arriendo','alquiler','hipoteca','supermercado','farmacia','restaurant','comida','taxi','gas','luz','agua','teléfono','internet','gym','gimnasio','médico','doctor','colegio','universidad'];
+  var low = text.toLowerCase();
+  for(var i=0;i<palabras.length;i++){
+    if(low.includes(palabras[i])){
+      var label = palabras[i].charAt(0).toUpperCase()+palabras[i].slice(1);
+      var catMap = {
+        'Arriendo':'Hogar','Alquiler':'Hogar','Hipoteca':'Hogar',
+        'Supermercado':'Alimentación','Farmacia':'Salud','Restaurant':'Alimentación','Comida':'Alimentación',
+        'Taxi':'Transporte','Gas':'Hogar','Luz':'Hogar','Agua':'Hogar',
+        'Teléfono':'Hogar','Internet':'Hogar','Gym':'Salud','Gimnasio':'Salud',
+        'Médico':'Salud','Doctor':'Salud','Colegio':'Educación','Universidad':'Educación'
+      };
+      return {cat:catMap[label]||'Misceláneos',period:'Fijo',label:label,conf:80};
+    }
+  }
+  return null;
+}
+
 function parse(){
   var text = document.getElementById('txt').value.trim();
   if(!text) return;
   var low = text.toLowerCase();
   var banco = detectBanco(low);
-  var mm = text.match(/\$\s?([\d\.\,]+)/);
-  var monto = mm?parseInt(mm[1].replace(/\./g,'').replace(',','')):0;
-  var esI = /transferencia recibida|abono|depósito|deposito/i.test(text);
+  var monto = detectMonto(text);
+  // Detectar ingreso: transferencia recibida, abono, depósito, o palabras clave de email bancario
+  var esI = /transferencia de fondos recibida|transferencia recibida|ha instruido transferencia|abono|depósito|deposito|ingreso recibido/i.test(text);
   var tipo = esI?'Ingreso':'Egreso';
   var esItauPush = banco==='Itaú'&&/giro o compra|hiciste/i.test(text);
-  var comercio = detectComercio(low);
+  var comercio = detectComercio(low) || detectDescripcionLibre(text);
   var needsAsk = esItauPush&&!comercio;
-  cur = {banco,monto,tipo,label:comercio?comercio.label:(esI?'Transferencia recibida':needsAsk?'':banco),cat:comercio?comercio.cat:'Misceláneos',period:comercio?comercio.period:'Esporádico',conf:comercio?comercio.conf:(needsAsk?0:65),needsAsk};
-  if(esI){cur.cat='Ingresos Laborales';cur.period='Fijo';cur.label='Transferencia recibida';cur.conf=90;cur.needsAsk=false;}
+  cur = {banco,monto,tipo,label:comercio?comercio.label:(esI?'Transferencia recibida':needsAsk?'':text.split(' ').slice(0,3).join(' ')),cat:comercio?comercio.cat:'Misceláneos',period:comercio?comercio.period:'Esporádico',conf:comercio?comercio.conf:(needsAsk?0:60),needsAsk};
+  if(esI){cur.cat='Ingresos Extra';cur.period='Esporádico';cur.label='Transferencia recibida';cur.conf=90;cur.needsAsk=false;}
   renderResult();
 }
 
